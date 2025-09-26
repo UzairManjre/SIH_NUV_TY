@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIH Drone Progress Dashboard</title>
+    
+    <link rel="stylesheet" href="pannellum/pannellum.css">
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <h1>DRONE SITE MONITOR <span class="accent">SIH Internal</span></h1>
+        <div class="nav-links">
+            <a href="#dashboard">Dashboard</a>
+            <a href="#analysis">Analysis</a>
+            <a href="#settings">Settings</a>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        
+        <div class="metric-cards">
+            <div class="card metric-progress">
+                <h3>Progress Status</h3>
+                <p class="data-point">75% Complete</p>
+            </div>
+            <div class="card metric-schedule">
+                <h3>Schedule Variance</h3>
+                <p class="data-point">+3 Days Ahead</p>
+            </div>
+            <div class="card metric-risk">
+                <h3>Open Issues (RFIs)</h3>
+                <p class="data-point">5 Critical Alerts</p>
+            </div>
+        </div>
+
+        <div class="viewer-container">
+            <div id="panorama"></div>
+
+            <div class="overlay-toggle toggle-design">
+                <input type="checkbox" id="design-toggle">
+                <label for="design-toggle">As-Built vs. As-Designed (BIM)</label>
+            </div>
+            
+            <div class="overlay-toggle toggle-safety">
+                <input type="checkbox" id="safety-toggle">
+                <label for="safety-toggle">AI Safety Violation Heatmap</label>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            
+            <div class="timeline-group">
+                <p class="tool-label">Current View Date:</p>
+                <div class="date-navigation">
+                    <button id="prev-btn" class="nav-btn btn-secondary" disabled>← Previous Day</button>
+
+                    <span id="current-date-label" class="date-display">Day 1 (Foundation)</span>
+
+                    <button id="next-btn" class="nav-btn btn-primary">Next Day →</button>
+                </div>
+            </div>
+
+            <div class="tool-buttons">
+                <button id="annotate-btn" class="tool-btn btn-primary">📍 Add Inspection Pin</button>
+                
+                <button id="quantify-btn" class="tool-btn btn-secondary">📐 Quantify Stockpile</button>
+            </div>
+
+            <p id="annotation-status" class="status-message primary-status"></p>
+            <p id="quantify-status" class="status-message secondary-status"></p>
+        </div>
+    </div>
+    
+    <script src="pannellum/pannellum.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

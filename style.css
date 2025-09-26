@@ -1,0 +1,314 @@
+/* VARIABLES & FONT */
+:root {
+    --color-dark: #1e1e2f;
+    --color-accent: #00bcd4; /* Cyan/Teal Accent */
+    --color-light: #f4f4f9;
+    --color-text: #ccc;
+    --color-card-bg: #2b2b3b;
+    --color-green: #4CAF50;
+    --color-yellow: #FFC107;
+    --color-red: #F44336;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-dark);
+    color: var(--color-text);
+}
+
+/* 1. Navigation Bar */
+.navbar {
+    background-color: #1a1a25; /* Darker than body */
+    color: var(--color-light);
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.navbar h1 {
+    font-size: 1.5em;
+    margin: 0;
+    font-weight: 700;
+}
+
+.accent {
+    color: var(--color-accent);
+}
+
+.nav-links a {
+    color: var(--color-text);
+    text-decoration: none;
+    margin-left: 20px;
+    font-weight: 400;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover {
+    color: var(--color-accent);
+}
+
+/* Main Content Layout */
+.main-content {
+    padding: 20px 30px;
+    max-width: 1400px; /* Increased width for more space */
+    margin: auto;
+}
+
+/* 2. Key Metrics Cards (Feature 3) */
+.metric-cards {
+    display: flex;
+    justify-content: space-between;
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.card {
+    flex: 1;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: var(--color-card-bg);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+.card h3 {
+    margin-top: 0;
+    font-size: 1em;
+    font-weight: 400;
+}
+
+.data-point {
+    font-size: 2em;
+    font-weight: 700;
+    margin: 5px 0 0;
+}
+
+.metric-progress .data-point { color: var(--color-green); }
+.metric-schedule .data-point { color: var(--color-yellow); }
+.metric-risk .data-point { color: var(--color-red); }
+
+
+/* 3. 360 Viewer Styling */
+.viewer-container {
+    position: relative;
+    width: 100%;
+    height: 650px; 
+    border: 1px solid var(--color-card-bg);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.3s; /* Smooth transition for overlay effect */
+}
+
+#panorama {
+    width: 100%;
+    height: 100%;
+}
+
+/* 4. Overlay Toggles (Features 4 & 6) */
+.overlay-toggle {
+    position: absolute;
+    right: 15px;
+    background: rgba(43, 43, 59, 0.85);
+    color: var(--color-text);
+    padding: 10px 15px;
+    border-radius: 5px;
+    z-index: 10;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.overlay-toggle:hover {
+    background: rgba(43, 43, 59, 1);
+}
+
+.toggle-design { top: 15px; }
+.toggle-safety { top: 70px; } /* Stack the second toggle */
+
+.overlay-toggle input:checked + label {
+    color: var(--color-accent);
+    font-weight: bold;
+}
+
+/* CSS for Feature 6: Heatmap Simulation */
+/* Simulates an overall reddish tint when safety is active */
+.viewer-container.heatmap-active {
+    box-shadow: 0 0 30px var(--color-red) inset;
+}
+
+/* 5. Control Panel and Buttons */
+.control-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-top: 1px solid var(--color-card-bg);
+}
+
+.timeline-group {
+    flex: 2;
+}
+
+.tool-buttons {
+    flex: 1;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+.tool-label {
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.tool-btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+.btn-primary {
+    background-color: var(--color-accent);
+    color: var(--color-dark);
+}
+
+.btn-primary:hover {
+    background-color: #0097a7;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background-color: var(--color-card-bg);
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
+}
+
+.btn-secondary:hover {
+    background-color: #3b3b50;
+    transform: translateY(-1px);
+}
+
+.status-message {
+    flex: 2;
+    font-style: italic;
+    padding-left: 20px;
+    margin: 0;
+}
+.primary-status { color: var(--color-accent); }
+.secondary-status { color: var(--color-yellow); }
+
+
+/* 6. Timeline Slider (Feature 1) */
+#date-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    background: #3b3b50;
+    outline: none;
+    opacity: 0.8;
+    transition: opacity .2s;
+    border-radius: 4px;
+}
+
+#date-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    cursor: pointer;
+    border: 3px solid var(--color-dark);
+}
+
+.slider-markers {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 5px;
+    width: 100%;
+}
+
+/* 7. Hotspot Styles (Pannellum pins) */
+.pin-critical {
+    background-color: var(--color-red) !important;
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+}
+
+.pin-new, .pin-safety-warning {
+    background-color: var(--color-yellow) !important;
+    border: 2px solid var(--color-dark);
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+}
+
+.pin-volumetric {
+    background-color: var(--color-accent) !important;
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+}
+
+/* Hide default Pannellum tooltip background for a cleaner look */
+.pnlm-hotspot-tooltip {
+    background-color: rgba(43, 43, 59, 0.9) !important;
+    border-color: var(--color-accent) !important;
+    color: var(--color-light) !important;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+/* Add this to your existing style.css */
+
+.date-navigation {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Space between elements */
+}
+
+.date-display {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: var(--color-accent);
+    min-width: 180px; /* Ensures the element doesn't jump when text changes */
+    text-align: center;
+}
+
+.nav-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+/* Inherit button styles, but slightly adjust for navigation focus */
+#prev-btn.btn-secondary {
+    background-color: var(--color-card-bg);
+    color: var(--color-text);
+    border: 1px solid #444;
+}
+
+#next-btn.btn-primary {
+    background-color: var(--color-accent);
+    color: var(--color-dark);
+}
+
+.nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: #3b3b50;
+    color: #888;
+}
