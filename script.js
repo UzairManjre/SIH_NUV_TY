@@ -39,9 +39,6 @@ function setupApplicationLogic() {
     console.log("Prev Button Element:", prevBtn);
     console.log("Next Button Element:", nextBtn);
 
-    prevBtn.onclick = () => console.log('Prev button clicked');
-    nextBtn.onclick = () => console.log('Next button clicked'); 
-
 
     // --- 3. FEATURE 1: PROGRESS BUTTONS LOGIC ---
     
@@ -101,21 +98,57 @@ function setupApplicationLogic() {
 
 
     // --- 5. FEATURE 5: VOLUMETRIC MEASUREMENT LOGIC ---
-    quantifyBtn.addEventListener('click', function() {
-        quantifyStatus.textContent = 'Processing 3D Model Data...';
+    quantifyBtn.addEventListener('click', async function() {
+        alert("Button clicked!");
+        quantifyStatus.textContent = 'Pinging AI Backend... Sending Image for Analysis...';
         removeHotspots('pin-volumetric');
 
-        setTimeout(() => {
-            const volume = panoramaImages[currentDayIndex].volume;
+        try {
+            // 1. Get the current image URL and fetch it as a blob
+            const imageUrl = panoramaImages[currentDayIndex].url;
+            const imageResponse = await fetch(imageUrl);
+            if (!imageResponse.ok) throw new Error(`Failed to fetch image: ${imageUrl}`);
+            const imageBlob = await imageResponse.blob();
 
-            quantifyStatus.textContent = `✅ Volumetric Analysis Complete: ${volume} of Material Remaining.`;
+            // 2. Prepare form data for the backend
+            const formData = new FormData();
+            formData.append('image', imageBlob, imageUrl.split('/').pop());
+            formData.append('metadata', JSON.stringify({
+                activity_type: 'road construction site analysis',
+                location_stretch: `Day ${currentDayIndex} View`
+            }));
+
+            // 3. Call the backend API
+            const analysisResponse = await fetch('http://127.0.0.1:8000/analyze-progress/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!analysisResponse.ok) {
+                const errorData = await analysisResponse.json();
+                throw new Error(`Backend error: ${errorData.detail || analysisResponse.statusText}`);
+            }
+
+            const result = await analysisResponse.json();
+
+            // 4. Process and display the results
+            const equipment = result.detected_equipment || {};
+            const equipmentList = Object.keys(equipment).length > 0 
+                ? Object.entries(equipment).map(([key, value]) => `${key}: ${value}`).join(', ')
+                : "None detected.";
+
+            const statusText = `✅ AI Analysis Complete. Detected Equipment: ${equipmentList}`;
+            quantifyStatus.textContent = statusText;
             
             viewer.addHotSpot({
-                "pitch": -10, "yaw": 60, "text": `Stockpile Volume: ${volume}`,
+                "pitch": -10, "yaw": 60, "text": `AI Analysis: ${equipmentList}`,
                 "URL": "#", "cssClass": "pin-volumetric"
             });
-            
-        }, 800);
+
+        } catch (error) {
+            console.error("Error during AI analysis:", error);
+            quantifyStatus.textContent = `❌ Error: ${error.message}`;
+        }
     });
 
 
