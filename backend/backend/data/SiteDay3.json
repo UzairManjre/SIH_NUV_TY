@@ -1,0 +1,21 @@
+{
+    "location_stretch": "Site Day 3",
+    "activity_type": "construction",
+    "stage_of_work": "sky",
+    "percent_completion": {
+        "wall": 7.402031930333818e-05,
+        "building": 0.27051850507982583,
+        "sky": 0.45671344339622644,
+        "earth": 0.022212808417997096,
+        "mountain": 0.004401759796806967,
+        "plant": 1.6237300435413642e-05,
+        "water": 0.2460533381712627,
+        "stairs": 8.708272859216255e-06,
+        "streetlight": 1.179245283018868e-06
+    },
+    "detected_equipment": {},
+    "progress_since_last_report": {},
+    "observed_issues": [],
+    "recommendations": [],
+    "filename": "day_3.jpg"
+}

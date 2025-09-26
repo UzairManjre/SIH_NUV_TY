@@ -1,238 +1,410 @@
 // Global variable declaration for the Pannellum viewer instance
 let viewer;
+let currentDayIndex = 1; // This is the main declaration
 
-// --- 1. CONFIGURATION (UNCHANGED) ---
-const panoramaImages = {
-    1: { name: 'Day 1 (Foundation)', url: 'images/day_1.jpg', volume: '450 m³'},
-    2: { name: 'Day 7 (Framing)', url: 'images/day_7.jpg', volume: '310 m³'},
-    3: { name: 'Day 14 (Roofing)', url: 'images/day_14.jpg', volume: '150 m³'}
+// DOM Elements
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const closeSidebar = document.getElementById('close-sidebar');
+
+// Toggle sidebar
+sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('active');
+});
+
+// Close sidebar when clicking the close button
+closeSidebar.addEventListener('click', () => {
+    sidebar.classList.remove('active');
+});
+
+// Close sidebar when clicking outside
+window.addEventListener('click', (e) => {
+    if (!sidebar.contains(e.target) && e.target !== sidebarToggle) {
+        sidebar.classList.remove('active');
+    }
+});
+
+// Prevent clicks inside sidebar from closing it
+sidebar.addEventListener('click', (e) => {
+    e.stopPropagation();
+});
+
+// Timeline item click handler
+document.querySelectorAll('.timeline-item label').forEach(label => {
+    label.addEventListener('click', (e) => {
+        const item = label.closest('.timeline-item');
+        item.classList.toggle('expanded');
+    });
+});
+
+// Mock data for the timeline
+const mockTimelineData = {
+    1: {
+        status: 'completed',
+        title: 'Foundation Work',
+        description: 'Site preparation and foundation work completed',
+        progress: 100,
+        findings: [
+            '✓ Site cleared and leveled',
+            '✓ Foundation poured and set',
+            '✓ Initial drainage installed'
+        ],
+        insights: [
+            { type: 'positive', title: 'On Schedule', message: 'Foundation work completed as planned' },
+            { type: 'info', title: 'Next Steps', message: 'Begin framing work' }
+        ]
+    },
+    2: {
+        status: 'active',
+        title: 'Framing',
+        description: 'Structural framing in progress',
+        progress: 45,
+        findings: [
+            '✓ 60% of wall framing complete',
+            '✓ Roof trusses delivered',
+            '⚠️ Safety check needed: Unsecured materials'
+        ],
+        insights: [
+            { type: 'warning', title: 'Attention Needed', message: 'Safety inspection required' },
+            { type: 'positive', title: 'Good Progress', message: 'Ahead of schedule by 2 days' }
+        ]
+    },
+    3: {
+        status: 'pending',
+        title: 'Roofing',
+        description: 'Roof installation',
+        progress: 0,
+        findings: [
+            'Scheduled to start after framing completion',
+            'Materials on order',
+            'Crew assigned'
+        ],
+        insights: [
+            { type: 'info', title: 'Upcoming', message: 'Scheduled to start in 3 days' }
+        ]
+    }
 };
 
-// --- Utility function to remove temporary hotspots (UNCHANGED) ---
-function removeHotspots(className) {
-    if (!viewer) return;
-    const hs = viewer.getContainer().querySelectorAll(`.${className}`);
-    hs.forEach(h => h.remove());
+// Function to update the timeline with mock data
+function updateTimeline(day) {
+    const data = mockTimelineData[day] || mockTimelineData[1];
+    const timelineItem = document.querySelector(`.timeline-item:nth-child(${day})`);
+    
+    if (timelineItem) {
+        // Update status classes
+        timelineItem.className = 'timeline-item ' + data.status;
+        
+        // Update progress bar
+        const progressBar = timelineItem.querySelector('.progress');
+        if (progressBar) {
+            progressBar.style.width = `${data.progress}%`;
+        }
+        
+        // Update status text
+        const statusEl = timelineItem.querySelector('.timeline-status');
+        if (statusEl) {
+            if (data.status === 'completed') {
+                statusEl.textContent = '✓ Completed';
+            } else if (data.status === 'active') {
+                statusEl.textContent = `In Progress (${data.progress}%)`;
+            } else {
+                statusEl.textContent = 'Pending';
+            }
+        }
+        
+        // Update findings
+        const findingsContainer = timelineItem.querySelector('.ai-findings ul');
+        if (findingsContainer) {
+            findingsContainer.innerHTML = data.findings
+                .map(item => `<li>${item}</li>`)
+                .join('');
+        }
+    }
+}
+
+// Function to update insights panel
+function updateInsights(day) {
+    const data = mockTimelineData[day] || mockTimelineData[1];
+    const insightsContainer = document.querySelector('.ai-insights');
+    
+    if (insightsContainer) {
+        // Remove existing insights
+        insightsContainer.innerHTML = `
+            <h3>AI Insights</h3>
+            ${data.insights.map(insight => `
+                <div class="insight ${insight.type}">
+                    <span class="insight-icon">
+                        ${insight.type === 'positive' ? '📊' : 
+                          insight.type === 'warning' ? '⚠️' : 'ℹ️'}
+                    </span>
+                    <div class="insight-content">
+                        <h4>${insight.title}</h4>
+                        <p>${insight.message}</p>
+                    </div>
+                </div>
+            `).join('')}
+        `;
+    }
+}
+
+// API call to analyze progress with the backend
+async function analyzeProgress(day) {
+    try {
+        // Get the current panorama image
+        const panorama = panoramaImages[day];
+        if (!panorama) {
+            throw new Error(`No panorama image found for day ${day}`);
+        }
+
+        // Create form data
+        const formData = new FormData();
+        
+        // Fetch the image
+        const response = await fetch(panorama.url);
+        const blob = await response.blob();
+        
+        // Add image to form data
+        formData.append('image', blob, `day_${day}.jpg`);
+        
+        // Add metadata
+        const metadata = {
+            activity_type: 'construction',
+            location_stretch: `Site Day ${day}`,
+            timestamp: new Date().toISOString()
+        };
+        formData.append('metadata', JSON.stringify(metadata));
+        
+        // Make the API request
+        const apiResponse = await fetch('http://localhost:8001/analyze-progress/', {
+            method: 'POST',
+            body: formData
+        });
+            
+        // Handle the response
+        if (!apiResponse.ok) {
+            let errorDetails = '';
+            try {
+                const errorData = await apiResponse.json();
+                errorDetails = errorData.detail || JSON.stringify(errorData);
+            } catch (e) {
+                errorDetails = await apiResponse.text();
+            }
+            throw new Error(`API request failed with status ${apiResponse.status}: ${errorDetails}`);
+        }
+            
+        const data = await apiResponse.json();
+        
+        // Transform the backend response to match our frontend format
+        return {
+            success: true,
+            day: day,
+            analysis: {
+                status: 'completed',
+                title: `Day ${day} Analysis`,
+                description: 'AI analysis of construction progress',
+                progress: Math.round((data.percent_completion?.building || 0) * 100),
+                findings: Object.entries(data.detected_equipment || {}).map(
+                    ([item, count]) => `✓ Detected ${count} ${item}${count > 1 ? 's' : ''}`
+                ),
+                insights: [
+                    { 
+                        type: 'info', 
+                        title: 'Progress', 
+                        message: `Building progress: ${Math.round((data.percent_completion?.building || 0) * 100)}%` 
+                    },
+                    ...((data.observed_issues || []).map(issue => ({
+                        type: 'warning',
+                        title: 'Issue Detected',
+                        message: issue
+                    })))
+                ]
+            }
+        };
+    } catch (error) {
+        console.error('Error analyzing progress:', error);
+        // If it's a validation error, provide a more user-friendly message
+        if (error.message.includes('Image validation failed') || 
+            error.message.includes('does not appear to show')) {
+            throw new Error('The image does not appear to be a construction site. Please upload an image of a construction site.');
+        }
+        
+        // Fall back to mock data if the API call fails
+        return {
+            success: false,
+            day: day,
+            error: error.message,
+            analysis: mockTimelineData[day] || mockTimelineData[1]
+        };
+    }
+}
+
+// Function to load analysis for a specific day
+async function loadDayAnalysis(day) {
+    try {
+        // Show loading state
+        const statusMessages = document.getElementById('status-messages');
+        if (statusMessages) {
+            statusMessages.innerHTML = '<p class="status-message">Analyzing progress...</p>';
+            statusMessages.style.display = 'block';
+        }
+        
+        // Make the API call to analyze progress
+        const response = await analyzeProgress(day);
+        
+        if (response.success) {
+            // Update the UI with the analysis
+            updateTimeline(day);
+            updateInsights(day);
+            
+            // Update metrics
+            updateMetrics(day);
+            
+            // Show success message
+            if (statusMessages) {
+                statusMessages.innerHTML = `
+                    <p class="status-message success">
+                        ✓ Analysis complete for Day ${day}
+                    </p>
+                `;
+                // Hide the message after 3 seconds
+                setTimeout(() => {
+                    statusMessages.style.display = 'none';
+                }, 3000);
+            }
+        } else {
+            // Show error message but still update with available data
+            if (statusMessages) {
+                statusMessages.innerHTML = `
+                    <p class="status-message error">
+                        ⚠️ Using cached data: ${response.error}
+                    </p>
+                `;
+                // Hide the message after 5 seconds
+                setTimeout(() => {
+                    statusMessages.style.display = 'none';
+                }, 5000);
+            }
+            
+            // Still update with the mock data
+            updateTimeline(day);
+            updateInsights(day);
+            updateMetrics(day);
+        }
+    } catch (error) {
+        console.error('Error loading analysis:', error);
+        const statusMessages = document.getElementById('status-messages');
+        if (statusMessages) {
+            statusMessages.innerHTML = '<p class="status-message error">Error loading analysis. Please try again.</p>';
+        }
+    }
+}
+
+// Function to update metrics
+function updateMetrics(day) {
+    const metrics = {
+        1: { progress: '25% Complete', schedule: 'On Schedule', risk: 'No Issues' },
+        2: { progress: '50% Complete', schedule: '+2 Days Ahead', risk: '1 Safety Alert' },
+        3: { progress: '75% Complete', schedule: 'On Schedule', risk: 'No Issues' }
+    };
+    
+    const metric = metrics[day] || metrics[1];
+    
+    // Update metric cards
+    document.querySelector('.metric-progress .data-point').textContent = metric.progress;
+    document.querySelector('.metric-schedule .data-point').textContent = metric.schedule;
+    document.querySelector('.metric-risk .data-point').textContent = metric.risk;
+}
+
+// Configuration for panorama images
+const panoramaImages = {
+    1: { name: 'Day 1 (Foundation)', url: 'images/day_1.jpg' },
+    2: { name: 'Day 2 (Framing)', url: 'images/day_2.jpg' },
+    3: { name: 'Day 3 (Roofing)', url: 'images/day_3.jpg' }
+};
+
+// Utility function to update the viewer with the current panorama
+function updatePanoView() {
+    const newPano = panoramaImages[currentDayIndex];
+    
+    // Update the viewer with the new panorama
+    if (viewer) {
+        viewer.destroy();
+    }
+    
+    // Initialize the viewer with the current panorama
+    viewer = pannellum.viewer('panorama', {
+        type: 'equirectangular',
+        panorama: newPano.url,
+        autoLoad: true,
+        compass: true,
+        autoRotate: -2
+    });
+    
+    // Update the date label
+    document.getElementById('current-date-label').textContent = newPano.name;
+    
+    // Update button states
+    document.getElementById('prev-btn').disabled = (currentDayIndex === 1);
+    document.getElementById('next-btn').disabled = (currentDayIndex === Object.keys(panoramaImages).length);
+    
+    // Load analysis for the current day
+    loadDayAnalysis(currentDayIndex);
 }
 
 
 // --- 2. INITIALIZATION AND ASYNCHRONOUS CALLBACK ---
 
-// Define the function that holds ALL the event listeners and logic
-function setupApplicationLogic() {
+// Function to update the UI when the day changes
+function updateUIForDay(dayIndex) {
+    // Update metrics based on the day
+    const progressElement = document.querySelector('.metric-progress .data-point');
+    const scheduleElement = document.querySelector('.metric-schedule .data-point');
+    const riskElement = document.querySelector('.metric-risk .data-point');
     
-    // --- DOM Elements & State Variables ---
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    const dateLabel = document.getElementById('current-date-label');
-    const designToggle = document.getElementById('design-toggle');
-    const viewerContainer = document.querySelector('.viewer-container'); 
-    const quantifyBtn = document.getElementById('quantify-btn');
-    const quantifyStatus = document.getElementById('quantify-status');
-    const safetyToggle = document.getElementById('safety-toggle');
-    const annotateBtn = document.getElementById('annotate-btn');
-    const annotationStatus = document.getElementById('annotation-status');
-
-    let currentDayIndex = 1; 
-    const maxDayIndex = Object.keys(panoramaImages).length;
-
-    console.log("Prev Button Element:", prevBtn);
-    console.log("Next Button Element:", nextBtn);
-
-
-    // --- 3. FEATURE 1: PROGRESS BUTTONS LOGIC ---
+    // Example metrics that change based on the day
+    const metrics = [
+        { progress: '25% Complete', schedule: 'On Schedule', risk: '2 Critical Alerts' },
+        { progress: '50% Complete', schedule: '+1 Day Ahead', risk: '1 Critical Alert' },
+        { progress: '75% Complete', schedule: 'On Schedule', risk: 'No Critical Alerts' }
+    ];
     
-    function updatePanoView() {
-        const newPano = panoramaImages[currentDayIndex];
-        
-        // This viewer.load is now 100% safe to call
-        viewer.load(newPano.url); 
-        document.querySelectorAll('.status-message').forEach(el => el.textContent = '');
+    const index = Math.min(dayIndex - 1, metrics.length - 1);
+    const metric = metrics[index] || metrics[metrics.length - 1];
+    
+    if (progressElement) progressElement.textContent = metric.progress;
+    if (scheduleElement) scheduleElement.textContent = metric.schedule;
+    if (riskElement) riskElement.textContent = metric.risk;
+}
 
-        dateLabel.textContent = newPano.name;
-        
-        prevBtn.disabled = (currentDayIndex === 1);
-        nextBtn.disabled = (currentDayIndex === maxDayIndex);
 
-        // Reset overlays and pins for a clean view on date change
-        safetyToggle.checked = false;
-        viewerContainer.classList.remove('heatmap-active');
-        removeHotspots('pin-safety-warning'); 
+// currentDayIndex is already declared at the top
 
-        designToggle.checked = false;
-        viewerContainer.style.backgroundImage = "none";
-        viewerContainer.style.opacity = "1";
-    }
-
-    // Set initial state for buttons
-    prevBtn.disabled = true;
-
-    // Event listener for the NEXT button
-    nextBtn.addEventListener('click', function() {
-        if (currentDayIndex < maxDayIndex) {
-            currentDayIndex++;
-            updatePanoView();
-        }
-    });
-
-    // Event listener for the PREVIOUS button
-    prevBtn.addEventListener('click', function() {
+// Initialize the application when the window loads
+window.onload = function() {
+    // Set up event listeners
+    document.getElementById('prev-btn').addEventListener('click', function() {
         if (currentDayIndex > 1) {
             currentDayIndex--;
             updatePanoView();
         }
     });
 
-
-    // --- 4. FEATURE 4: DESIGN OVERLAY TOGGLE LOGIC ---
-    designToggle.addEventListener('change', function() {
-        if (this.checked) {
-            viewerContainer.style.backgroundImage = "url('images/overlay.png')";
-            viewerContainer.style.backgroundSize = "cover"; 
-            viewerContainer.style.opacity = "0.6"; 
-        } else {
-            viewerContainer.style.backgroundImage = "none";
-            viewerContainer.style.opacity = "1";
+    document.getElementById('next-btn').addEventListener('click', function() {
+        if (currentDayIndex < Object.keys(panoramaImages).length) {
+            currentDayIndex++;
+            updatePanoView();
         }
     });
 
-
-    // --- 5. FEATURE 5: VOLUMETRIC MEASUREMENT LOGIC ---
-    quantifyBtn.addEventListener('click', async function() {
-        alert("Button clicked!");
-        quantifyStatus.textContent = 'Pinging AI Backend... Sending Image for Analysis...';
-        removeHotspots('pin-volumetric');
-
-        try {
-            // 1. Get the current image URL and fetch it as a blob
-            const imageUrl = panoramaImages[currentDayIndex].url;
-            const imageResponse = await fetch(imageUrl);
-            if (!imageResponse.ok) throw new Error(`Failed to fetch image: ${imageUrl}`);
-            const imageBlob = await imageResponse.blob();
-
-            // 2. Prepare form data for the backend
-            const formData = new FormData();
-            formData.append('image', imageBlob, imageUrl.split('/').pop());
-            formData.append('metadata', JSON.stringify({
-                activity_type: 'road construction site analysis',
-                location_stretch: `Day ${currentDayIndex} View`
-            }));
-
-            // 3. Call the backend API
-            const analysisResponse = await fetch('http://127.0.0.1:8000/analyze-progress/', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!analysisResponse.ok) {
-                const errorData = await analysisResponse.json();
-                throw new Error(`Backend error: ${errorData.detail || analysisResponse.statusText}`);
-            }
-
-            const result = await analysisResponse.json();
-
-            // 4. Process and display the results
-            const equipment = result.detected_equipment || {};
-            const equipmentList = Object.keys(equipment).length > 0 
-                ? Object.entries(equipment).map(([key, value]) => `${key}: ${value}`).join(', ')
-                : "None detected.";
-
-            const statusText = `✅ AI Analysis Complete. Detected Equipment: ${equipmentList}`;
-            quantifyStatus.textContent = statusText;
-            
-            viewer.addHotSpot({
-                "pitch": -10, "yaw": 60, "text": `AI Analysis: ${equipmentList}`,
-                "URL": "#", "cssClass": "pin-volumetric"
-            });
-
-        } catch (error) {
-            console.error("Error during AI analysis:", error);
-            quantifyStatus.textContent = `❌ Error: ${error.message}`;
-        }
+    // Initialize the first panorama and load initial data
+    updatePanoView();
+    
+    // Initialize all timeline items
+    Object.keys(mockTimelineData).forEach(day => {
+        updateTimeline(day);
     });
-
-
-    // --- 6. FEATURE 6: SAFETY VIOLATION HEATMAP LOGIC ---
-    safetyToggle.addEventListener('change', function() {
-        if (this.checked) {
-            viewerContainer.classList.add('heatmap-active');
-            
-            viewer.addHotSpot({
-                "pitch": 15, "yaw": -10, "text": "High Risk: Unbarricaded Edge (AI Detected).",
-                "URL": "#", "cssClass": "pin-safety-warning"
-            });
-            viewer.addHotSpot({
-                "pitch": -5, "yaw": 80, "text": "AI Flag: Worker not wearing required PPE.",
-                "URL": "#", "cssClass": "pin-safety-warning"
-            });
-        } else {
-            viewerContainer.classList.remove('heatmap-active');
-            removeHotspots('pin-safety-warning');
-        }
-    });
-
-
-    // --- 7. FEATURE 2: REMOTE ANNOTATION LOGIC ---
-    let isAnnotating = false;
-
-    function handlePanoramaClick(event) {
-        if (isAnnotating) {
-            const pitch = viewer.getPitch();
-            const yaw = viewer.getYaw();
-            
-            annotationStatus.textContent = "✅ Pin dropped! Custom issue logged: 'Needs immediate follow-up'.";
-            
-            viewer.addHotSpot({
-                "pitch": pitch,
-                "yaw": yaw,
-                "text": "New PM Note: Issue Flagged by Remote User!",
-                "URL": "#",
-                "cssClass": "pin-new" 
-            });
-            
-            isAnnotating = false;
-            annotateBtn.textContent = "📍 Add Inspection Pin";
-            
-            viewer.getContainer().style.cursor = 'grab';
-            viewer.getContainer().removeEventListener('click', handlePanoramaClick);
-        }
-    }
-
-    annotateBtn.addEventListener('click', function() {
-        if (!isAnnotating) {
-            isAnnotating = true;
-            this.textContent = "Click on the 360 View to Drop Pin...";
-            annotationStatus.textContent = "Annotation mode active. Click anywhere in the 360 viewer.";
-            
-            viewer.getContainer().style.cursor = 'crosshair';
-            viewer.getContainer().addEventListener('click', handlePanoramaClick);
-        } else {
-            isAnnotating = false;
-            annotateBtn.textContent = "📍 Add Inspection Pin";
-            viewer.getContainer().style.cursor = 'grab';
-            viewer.getContainer().removeEventListener('click', handlePanoramaClick);
-            annotationStatus.textContent = "Annotation cancelled.";
-        }
-    });
-} // End of setupApplicationLogic()
-
-
-// This executes the logic immediately after the DOM is fully loaded.
-window.onload = function() {
-    // Initialize the viewer inside the onload function
-    viewer = pannellum.viewer('panorama', {
-        "type": "equirectangular",
-        "panorama": panoramaImages[1].url,
-        "autoLoad": true,
-        "compass": true,
-        "autoRotate": -2,
-        // *** KEY CHANGE *** Use the scene change event as a reliable trigger
-        "onload": setupApplicationLogic, 
-        "hotSpots": [
-            {
-                "pitch": 0, "yaw": -50, "text": "Critical Issue: Concrete pouring delayed by 2 days.",
-                "URL": "#", "cssClass": "pin-critical"
-            }
-        ]
-    });
+    
+    // Load initial insights
+    updateInsights(currentDayIndex);
+    updateMetrics(currentDayIndex);
 };

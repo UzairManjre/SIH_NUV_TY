@@ -12,16 +12,101 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Status Messages Container -->
+    <div id="status-messages"></div>
 
     <nav class="navbar">
         <h1>DRONE SITE MONITOR <span class="accent">SIH Internal</span></h1>
         <div class="nav-links">
-            <a href="#dashboard">Dashboard</a>
-            <a href="#analysis">Analysis</a>
-            <a href="#settings">Settings</a>
+            <a href="#" class="active">Dashboard</a>
         </div>
     </nav>
 
+    <!-- Sidebar Toggle Button -->
+    <button id="sidebar-toggle" class="sidebar-toggle">☰ Analysis</button>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h3>Project Timeline</h3>
+            <button id="close-sidebar" class="close-btn">×</button>
+        </div>
+        
+        <div class="timeline">
+            <div class="timeline-item completed">
+                <input type="checkbox" id="milestone1" checked>
+                <label for="milestone1">
+                    <span class="timeline-date">Day 1</span>
+                    <span class="timeline-text">Foundation Started</span>
+                    <span class="timeline-status">✓ Completed</span>
+                </label>
+                <div class="timeline-details">
+                    <p>Initial groundwork completed successfully</p>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item active">
+                <input type="checkbox" id="milestone2" checked>
+                <label for="milestone2">
+                    <span class="timeline-date">Day 2</span>
+                    <span class="timeline-text">Framing in Progress</span>
+                    <span class="timeline-status">In Progress (50%)</span>
+                </label>
+                <div class="timeline-details">
+                    <p>Structural framework being installed</p>
+                    <div class="ai-findings">
+                        <h4>AI Analysis:</h4>
+                        <ul>
+                            <li>✓ 5 steel beams detected</li>
+                            <li>✓ 3 workers on site</li>
+                            <li>⚠️ Safety gear compliance: 80%</li>
+                        </ul>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 50%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <input type="checkbox" id="milestone3">
+                <label for="milestone3">
+                    <span class="timeline-date">Day 3</span>
+                    <span class="timeline-text">Roofing</span>
+                    <span class="timeline-status">Pending</span>
+                </label>
+                <div class="timeline-details">
+                    <p>Scheduled to start after framing completion</p>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ai-insights">
+            <h3>AI Insights</h3>
+            <div class="insight positive">
+                <span class="insight-icon">📊</span>
+                <div class="insight-content">
+                    <h4>Good Progress</h4>
+                    <p>Construction is 1 day ahead of schedule</p>
+                </div>
+            </div>
+            <div class="insight warning">
+                <span class="insight-icon">⚠️</span>
+                <div class="insight-content">
+                    <h4>Safety Alert</h4>
+                    <p>2 workers without safety helmets detected</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
     <div class="main-content">
         
         <div class="metric-cards">
@@ -67,13 +152,12 @@
             </div>
 
             <div class="tool-buttons">
-                <button id="annotate-btn" class="tool-btn btn-primary">📍 Add Inspection Pin</button>
-                
-                <button id="quantify-btn" class="tool-btn btn-secondary">📐 Quantify Stockpile</button>
+                <!-- Buttons removed -->
             </div>
 
-            <p id="annotation-status" class="status-message primary-status"></p>
-            <p id="quantify-status" class="status-message secondary-status"></p>
+            <div id="status-messages">
+                <!-- Status messages will appear here -->
+            </div>
         </div>
     </div>
     

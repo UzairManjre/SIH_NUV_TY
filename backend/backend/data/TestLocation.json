@@ -1,0 +1,27 @@
+{
+    "location_stretch": "Test Location",
+    "activity_type": "construction",
+    "stage_of_work": "building",
+    "percent_completion": {
+        "building": 0.29170438957475997,
+        "tree": 0.026599222679469594,
+        "road": 0.021598079561042524,
+        "sidewalk": 0.2846650663008688,
+        "person": 0.13903406492912665,
+        "plant": 0.002961819844535894,
+        "car": 0.008952903520804755,
+        "base": 0.0009053497942386831,
+        "bus": 0.19931755829903977,
+        "awning": 0.010013717421124828,
+        "van": 0.014247828074988568
+    },
+    "detected_equipment": {
+        "bus": 1,
+        "person": 4,
+        "stop sign": 1
+    },
+    "progress_since_last_report": {},
+    "observed_issues": [],
+    "recommendations": [],
+    "filename": "construction.jpg"
+}
